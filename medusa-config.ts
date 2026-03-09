@@ -1,5 +1,24 @@
 import { loadEnv, defineConfig } from '@medusajs/framework/utils'
 
+// Define jest globally to avoid Medusa crashing when it evaluates test files during auto-discovery
+if (typeof global !== "undefined" && typeof (global as any).jest === "undefined") {
+  const noop = () => { };
+  (global as any).jest = { mock: noop, setTimeout: noop, clearAllMocks: noop };
+  (global as any).describe = noop;
+  (global as any).it = noop;
+  (global as any).beforeAll = noop;
+  (global as any).beforeEach = noop;
+  (global as any).afterAll = noop;
+  (global as any).afterEach = noop;
+  (global as any).expect = (() => ({
+    toEqual: noop,
+    toBeDefined: noop,
+    toBe: noop,
+    rejects: { toThrow: noop },
+    toHaveBeenCalledWith: noop
+  }));
+}
+
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
 module.exports = defineConfig({
@@ -25,7 +44,13 @@ module.exports = defineConfig({
       }
     },
   },
+  modules: [
+    {
+      resolve: "./src/modules/gifting",
+    },
+  ],
   projectConfig: {
+    redisUrl: process.env.REDIS_URL,
     databaseDriverOptions: {
       ssl: false,
       sslmode: "disable",
